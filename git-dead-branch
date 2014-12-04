@@ -1,0 +1,47 @@
+#!/usr/bin/env php
+<?php
+
+$arguments = array_slice($argv, 1);
+
+if (in_array('--help', $arguments)) {
+    echo 'git-dead-branch - List/delete all branches that are contained in develop/master.', PHP_EOL;
+    echo PHP_EOL;
+    echo 'OPTIONS', PHP_EOL;
+    echo PHP_EOL;
+    echo '    --help    This help text.', PHP_EOL;
+    echo '    --cleanup Automatically delete redundant branches.', PHP_EOL;
+    return;
+}
+
+// Get all the branches.
+$branches = explode(PHP_EOL, rtrim(shell_exec('git branch')));
+
+foreach ($branches as $branch) {
+    // Remove leading '* ' or '  '.
+    $branch = substr($branch, 2);
+
+    // Ignore develop and master.
+    if ($branch == 'develop' || $branch == 'master') {
+        continue;
+    }
+
+    $containingBranches = array_map(
+        function ($b) {
+            // Remove leading '* ' or '  '.
+            return substr($b, 2);
+        },
+        explode(PHP_EOL, rtrim(shell_exec('git branch --contains ' . escapeshellarg($branch))))
+    );
+
+    $cleanup = in_array('--cleanup', $arguments);
+
+    foreach ($containingBranches as $containingBranch) {
+        if ($containingBranch == 'develop' || $containingBranch == 'master') {
+            echo $branch, PHP_EOL;
+
+            if ($cleanup) {
+                echo shell_exec('git branch -d ' . escapeshellarg($branch));
+            }
+        }
+    }
+}
