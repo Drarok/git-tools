@@ -50,3 +50,15 @@ master $
 ```
 
 ### git-publish
+
+This one is extremely lazy. When you have a new branch you want to push, you have to specify its name, and set a flag if you want to track it. No longer! This tool is a lazy person's `git push -u $remote $current_branch`.
+
+```bash
+feature/brand-new-awesome $ git publish
+Publishing feature/brand-new-awesome to origin.
+Branch feature/brand-new-awesome set up to track remote branch feature/brand-new-awesome from origin.
+
+feature/optional-remote-name $ git publish github
+Publishing feature/optional-remote-name to github.
+Branch feature/optional-remote-name set up to track remote branch feature/optional-remote-name from github.
+```
