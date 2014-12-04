@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# This script will push a branch up to a remote (default: origin)
+# and set up tracking. It's just a lazy man's `git push -u origin $branch`.
+
+# What's the current branch?
+BRANCH_NAME="$(git symbolic-ref --short HEAD)";
+
+# Where are we pushing to?
+REMOTE_NAME="$1"
+if [ -z "$REMOTE_NAME" ]
+then
+    REMOTE_NAME="origin";
+fi
+
+echo "Publishing $BRANCH_NAME to ${REMOTE_NAME}.";
+git push -u "$REMOTE_NAME" "$BRANCH_NAME";
