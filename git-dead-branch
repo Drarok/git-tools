@@ -4,7 +4,7 @@
 $arguments = array_slice($argv, 1);
 
 if (in_array('--help', $arguments)) {
-    echo 'git-dead-branch - List/delete all branches that are contained in develop/master.', PHP_EOL;
+    echo 'git-dead-branch - List/delete local branches that are contained in develop/master.', PHP_EOL;
     echo PHP_EOL;
     echo 'OPTIONS', PHP_EOL;
     echo PHP_EOL;
@@ -13,7 +13,7 @@ if (in_array('--help', $arguments)) {
     return;
 }
 
-// Get all the branches.
+// Get all the local branches.
 $branches = explode(PHP_EOL, rtrim(shell_exec('git branch')));
 
 foreach ($branches as $branch) {
