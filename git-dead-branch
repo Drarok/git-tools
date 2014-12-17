@@ -16,6 +16,8 @@ if (in_array('--help', $arguments)) {
 // Get all the local branches.
 $branches = explode(PHP_EOL, rtrim(shell_exec('git branch')));
 
+$deadBranches = array();
+
 foreach ($branches as $branch) {
     // Remove leading '* ' or '  '.
     $branch = substr($branch, 2);
@@ -37,11 +39,20 @@ foreach ($branches as $branch) {
 
     foreach ($containingBranches as $containingBranch) {
         if ($containingBranch == 'develop' || $containingBranch == 'master') {
-            echo $branch, PHP_EOL;
+            $deadBranches[] = $branch;
+            break;
+        }
+    }
+}
 
-            if ($cleanup) {
-                echo shell_exec('git branch -d ' . escapeshellarg($branch));
-            }
+if (!$deadBranches) {
+    echo 'There are no dead branches.', PHP_EOL;
+} else {
+    foreach ($deadBranches as $branch) {
+        if ($cleanup) {
+            echo shell_exec('git branch -d ' . escapeshellarg($branch));
+        } else {
+            echo $branch, PHP_EOL;
         }
     }
 }
