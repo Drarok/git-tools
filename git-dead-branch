@@ -8,7 +8,7 @@ if (in_array('--help', $arguments) || in_array('-h', $arguments)) {
     echo '    git-dead-branch - List/delete local branches that are contained in develop/master.', PHP_EOL;
     echo PHP_EOL;
     echo 'SYNOPSIS', PHP_EOL;
-    echo '    git-dead-branch [-c]', PHP_EOL;
+    echo '    git-dead-branch [-c] [-f]', PHP_EOL;
     echo PHP_EOL;
     echo 'OPTIONS', PHP_EOL;
     echo PHP_EOL;
@@ -17,6 +17,9 @@ if (in_array('--help', $arguments) || in_array('-h', $arguments)) {
     echo PHP_EOL;
     echo '    -c, --cleanup', PHP_EOL;
     echo '        Automatically delete redundant branches.', PHP_EOL;
+    echo PHP_EOL;
+    echo '    -f, --force', PHP_EOL;
+    echo '        Forces deletion of redundant branches.', PHP_EOL;
     return;
 }
 
@@ -54,10 +57,12 @@ if (!$deadBranches) {
     echo 'There are no dead branches.', PHP_EOL;
 } else {
     $cleanup = (in_array('--cleanup', $arguments) || in_array('-c', $arguments));
+    $force = (in_array('--force', $arguments) || in_array('-f', $arguments));
 
     foreach ($deadBranches as $branch) {
         if ($cleanup) {
-            echo shell_exec('git branch -d ' . escapeshellarg($branch));
+            $option = $force ? '-D' : '-d';
+            echo shell_exec('git branch ' . $option . ' ' . escapeshellarg($branch));
         } else {
             echo $branch, PHP_EOL;
         }
