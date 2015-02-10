@@ -57,10 +57,12 @@ if (!$deadBranches) {
     echo 'There are no dead branches.', PHP_EOL;
 } else {
     $cleanup = (in_array('--cleanup', $arguments) || in_array('-c', $arguments));
+    $force = (in_array('--force', $arguments) || in_array('-f', $arguments));
 
     foreach ($deadBranches as $branch) {
         if ($cleanup) {
-            echo shell_exec('git branch -d ' . escapeshellarg($branch));
+            $option = $force ? '-D' : '-d';
+            echo shell_exec('git branch ' . $option . ' ' . escapeshellarg($branch));
         } else {
             echo $branch, PHP_EOL;
         }
