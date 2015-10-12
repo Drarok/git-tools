@@ -5,15 +5,18 @@ $arguments = array_slice($argv, 1);
 
 if (in_array('--help', $arguments) || in_array('-h', $arguments)) {
     echo 'NAME', PHP_EOL;
-    echo '    git-dead-branch - List/delete local branches that are contained in develop/master.', PHP_EOL;
+    echo '    git-dead-branch - List/delete branches that are contained in develop/master.', PHP_EOL;
     echo PHP_EOL;
     echo 'SYNOPSIS', PHP_EOL;
-    echo '    git-dead-branch [-c] [-f]', PHP_EOL;
+    echo '    git-dead-branch [-a] [-c] [-f]', PHP_EOL;
     echo PHP_EOL;
     echo 'OPTIONS', PHP_EOL;
     echo PHP_EOL;
     echo '    -h, --help', PHP_EOL;
     echo '        This help text.', PHP_EOL;
+    echo PHP_EOL;
+    echo '    -a, --all', PHP_EOL;
+    echo '        Include remote branches.', PHP_EOL;
     echo PHP_EOL;
     echo '    -c, --cleanup', PHP_EOL;
     echo '        Automatically delete redundant branches.', PHP_EOL;
@@ -23,18 +26,34 @@ if (in_array('--help', $arguments) || in_array('-h', $arguments)) {
     return;
 }
 
-// Get all the local branches.
-$branches = explode(PHP_EOL, rtrim(shell_exec('git branch')));
+// Get the branches.
+$allBranches = (in_array('-a', $arguments) || in_array('--all', $arguments));
+if ($allBranches) {
+    $branches = explode(PHP_EOL, rtrim(shell_exec('git branch -a')));
+    $branches = array_filter($branches, function ($branch) {
+        return strpos($branch, '->') === false;
+    });
+} else {
+    $branches = explode(PHP_EOL, rtrim(shell_exec('git branch')));
+}
 
 $deadBranches = array();
+
+define('DEVELOP_MASTER_PATTERN', '/^(remotes\/[^\/]+\/)?(develop|master)$/');
 
 foreach ($branches as $branch) {
     // Remove leading '* ' or '  '.
     $branch = substr($branch, 2);
 
-    // Ignore develop and master.
-    if ($branch == 'develop' || $branch == 'master') {
+    // Ignore local and remote develop and master.
+    if (preg_match(DEVELOP_MASTER_PATTERN, $branch)) {
         continue;
+    }
+
+    if ($allBranches) {
+        $containingBranchesCommand = 'git branch -a --contains ' . escapeshellarg($branch);
+    } else {
+        $containingBranchesCommand = 'git branch --contains ' . escapeshellarg($branch);
     }
 
     $containingBranches = array_map(
@@ -42,11 +61,11 @@ foreach ($branches as $branch) {
             // Remove leading '* ' or '  '.
             return substr($b, 2);
         },
-        explode(PHP_EOL, rtrim(shell_exec('git branch --contains ' . escapeshellarg($branch))))
+        explode(PHP_EOL, rtrim(shell_exec($containingBranchesCommand)))
     );
 
     foreach ($containingBranches as $containingBranch) {
-        if ($containingBranch == 'develop' || $containingBranch == 'master') {
+        if (preg_match(DEVELOP_MASTER_PATTERN, $containingBranch)) {
             $deadBranches[] = $branch;
             break;
         }
@@ -58,6 +77,11 @@ if (!$deadBranches) {
 } else {
     $cleanup = (in_array('--cleanup', $arguments) || in_array('-c', $arguments));
     $force = (in_array('--force', $arguments) || in_array('-f', $arguments));
+
+    if ($allBranches && $cleanup) {
+        echo 'Cleaning up remote branches is not currently supported.', PHP_EOL;
+        $cleanup = false;
+    }
 
     foreach ($deadBranches as $branch) {
         if ($cleanup) {
