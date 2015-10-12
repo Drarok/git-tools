@@ -31,6 +31,13 @@ fix/something-cool
 Deleted branch fix/something-cool (was a3a5173).
 ```
 
+It also supports checking (but not removing) remote branches.
+
+```bash
+develop $ git dead-branch -a
+remotes/origin/feature/something-merged
+```
+
 ### git-merged
 
 If you currently have a branch checked out that has been merged upstream (such as when you still have your merged Pull Request checked out), you can use this to tidy up. This of is as saying "This branch has been merged to *branch*".
