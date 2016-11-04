@@ -17,7 +17,7 @@ cd git-tools
 
 ### git-dead-branch
 
-Lists (and optionally removes) branches that have been merged to develop or master.
+Lists (and optionally removes) branches that have been merged to "safe" branches – develop and master by default.
 
 ```bash
 develop $ git dead-branch
@@ -27,10 +27,18 @@ fix/something-cool
 
 ```bash
 develop $ git dead-branch --cleanup
-feature/new-buttons
 Deleted branch feature/new-buttons (was 2dd9a39).
-fix/something-cool
 Deleted branch fix/something-cool (was a3a5173).
+```
+
+If you are merging many features to a long-lived branch, you can specify that branch as "safe":
+
+```bash
+develop $ git dead-branch
+There are no dead branches.
+develop $ git dead-branch version-2
+Deleted branch feature/v2-major-stuff (was 12abda1).
+Deleted branch fix/v2-bug-fixes (was b347334).
 ```
 
 It also supports checking (but not removing) remote branches.
