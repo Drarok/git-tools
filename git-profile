@@ -1,0 +1,182 @@
+#!/usr/bin/env python
+# coding=utf-8
+from __future__ import print_function
+
+import errno
+import json
+import os
+import re
+import subprocess
+import sys
+
+
+class Profile(object):
+    def __init__(self, name, email):
+        super(Profile, self).__init__()
+        self.name = name
+        self.email = email
+
+    def __str__(self):
+        return "<Profile name={0} email={1}>".format(
+            self.name,
+            self.email,
+        )
+
+
+class Config(object):
+    def __init__(self):
+        super(Config, self).__init__()
+        self.profiles = {}
+
+    def __str__(self):
+        profiles = {
+            key: str(profile)
+            for key, profile in self.profiles.items()
+        }
+        return "<Config profiles={0}>".format(profiles)
+
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, Config):
+            return o.profiles
+        elif isinstance(o, Profile):
+            return {
+                "name": o.name,
+                "email": o.email,
+            }
+        return super(JSONEncoder, self).default(o)
+
+
+def get_config_root():
+    home = os.environ.get("HOME")
+    if not home:
+        raise RuntimeError("Failed to find a HOME environment variable")
+    return os.path.join(home, ".config", "git-tools")
+
+
+def get_config_path():
+    return os.path.join(get_config_root(), "git-profile.json")
+
+
+def create_config_dir():
+    path = get_config_root()
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST or not os.path.isdir(path):
+            raise
+
+
+def load_config():
+    config = Config()
+    try:
+        with open(get_config_path()) as f:
+            config_data = json.load(f)
+        assert isinstance(config_data, dict)
+        config.profiles = {
+            key: Profile(p["name"], p["email"])
+            for key, p in config_data.items()
+        }
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            raise
+    return config
+
+
+def save_config(config):
+    with open(get_config_path(), "w") as f:
+        json.dump(config, f, cls=JSONEncoder, indent=2)
+
+
+def add_profile(config, profile_name, name, email):
+    if profile_name in config.profiles:
+        raise RuntimeError("Profile '{0}' already exists.".format(profile_name))
+    config.profiles[profile_name] = Profile(name, email)
+
+
+def rm_profile(config, profile_name):
+    if profile_name not in config.profiles:
+        raise RuntimeError("Profile '{0}' does not exist.".format(profile_name))
+    del config.profiles[profile_name]
+
+
+def switch_profile(config, profile_name):
+    if profile_name not in config.profiles:
+        raise RuntimeError("Profile '{0}' does not exist.".format(profile_name))
+    profile = config.profiles[profile_name]
+    subprocess.check_call(["git", "config", "user.name", profile.name])
+    subprocess.check_call(["git", "config", "user.email", profile.email])
+    print("Switched to profile {0}: {1} <{2}>".format(
+        profile_name, profile.name, profile.email,
+    ))
+
+
+def list_profiles(config):
+    if not config.profiles:
+        print("No profiles!")
+        return
+    current_name = subprocess.check_output(["git", "config", "user.name"]).strip().encode("utf-8")
+    current_email = subprocess.check_output(["git", "config", "user.email"]).strip().encode("utf-8")
+    for key, profile in config.profiles.items():
+        prefix = " "
+        if profile.name == current_name and profile.email == current_email:
+            prefix = "*"
+        print("{0} {1} ({2} <{3}>)".format(
+            prefix, key, profile.name, profile.email,
+        ))
+
+
+def print_usage():
+    usage = (
+        "usage: git profile [--switch] [KEY]\n"
+        "   or: git profile --add KEY --name 'Your Name' --email 'you@example.com'\n"
+        "   or: git profile --rm KEY\n"
+    )
+    print(usage)
+
+
+def parse_args(args):
+    regex = re.compile(r"^--(\w+)$")
+    if len(args) == 1 and not regex.match(args[0]):
+        return {"switch": args[0]}
+    result = {}
+    key = None
+    for arg in args:
+        if key is None:
+            match = regex.match(arg)
+            if not match:
+                raise ValueError("Invalid option: {0}".format(key))
+            key = match.group(1)
+            continue
+        result[key] = arg
+        key = None
+    if key:
+        result[key] = True
+    return result
+
+
+def main(args):
+    create_config_dir()
+    config = load_config()
+    args = parse_args(args)
+    if "add" in args:
+        add_profile(config, args.pop("add"), **args)
+    elif "rm" in args:
+        rm_profile(config, args.pop("rm"))
+    elif "switch" in args:
+        switch_profile(config, args.pop("switch"))
+    elif "help" in args:
+        print_usage()
+    else:
+        list_profiles(config)
+    save_config(config)
+
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    try:
+        main(args)
+    except RuntimeError as e:
+        print(e)
+        exit(1)

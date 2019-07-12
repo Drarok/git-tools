@@ -83,3 +83,23 @@ feature/optional-remote-name $ git publish github
 Publishing feature/optional-remote-name to github.
 Branch feature/optional-remote-name set up to track remote branch feature/optional-remote-name from github.
 ```
+
+### git-profile
+
+Simple management for different name/email combinations e.g. home and work.
+
+```bash
+develop $ git profile --add work --name 'Random Developer' --email 'r.developer@example.com'
+develop $ git profile --add home --name 'G. R. R. Developer' --email 'grrd@example.org'
+```
+
+```bash
+develop $ git profile home
+Switched to profile home: G. R. R. Developer <grrd@example.org>
+```
+
+```bash
+develop $ git profile
+  work (Random Developer <r.developer@example.com>)
+* home (G. R. R. Developer <grrd@exampl.org>)
+```
