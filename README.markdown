@@ -101,5 +101,5 @@ Switched to profile home: G. R. R. Developer <grrd@example.org>
 ```bash
 develop $ git profile
   work (Random Developer <r.developer@example.com>)
-* home (G. R. R. Developer <grrd@exampl.org>)
+* home (G. R. R. Developer <grrd@example.org>)
 ```
