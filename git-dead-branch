@@ -29,12 +29,8 @@ if (in_array('--help', $arguments) || in_array('-h', $arguments)) {
     return;
 }
 
-// Parse arguments.
-$allBranches = in_array('--all', $arguments) || in_array('-a', $arguments);
-$cleanup = in_array('--cleanup', $arguments) || in_array('-c', $arguments);
-$force = in_array('--force', $arguments) || in_array('-f', $arguments);
-
 // Get the branches.
+$allBranches = (in_array('-a', $arguments) || in_array('--all', $arguments));
 if ($allBranches) {
     $branches = explode(PHP_EOL, rtrim(shell_exec('git branch -a')));
     $branches = array_filter($branches, function ($branch) {
@@ -75,7 +71,11 @@ foreach ($branches as $branch) {
         continue;
     }
 
-    $containingBranchesCommand = 'git branch -a --contains ' . escapeshellarg($branch);
+    if ($allBranches) {
+        $containingBranchesCommand = 'git branch -a --contains ' . escapeshellarg($branch);
+    } else {
+        $containingBranchesCommand = 'git branch --contains ' . escapeshellarg($branch);
+    }
 
     $containingBranches = array_map(
         function ($b) {
@@ -96,6 +96,9 @@ foreach ($branches as $branch) {
 if (!$deadBranches) {
     echo 'There are no dead branches.', PHP_EOL;
 } else {
+    $cleanup = (in_array('--cleanup', $arguments) || in_array('-c', $arguments));
+    $force = (in_array('--force', $arguments) || in_array('-f', $arguments));
+
     if ($allBranches && $cleanup) {
         echo 'Cleaning up remote branches is not currently supported.', PHP_EOL;
         $cleanup = false;
