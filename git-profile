@@ -168,7 +168,7 @@ def parse_args(args):
         if key is None:
             match = regex.match(arg)
             if not match:
-                raise ValueError("Invalid option: {0}".format(key))
+                raise ValueError("Invalid value {0} for option {1}".format(arg, key))
             key = match.group(1)
             continue
         result[key] = arg
