@@ -48,6 +48,10 @@ class JSONEncoder(json.JSONEncoder):
         return super(JSONEncoder, self).default(o)
 
 
+def git(*args):
+    return subprocess.check_output(["git", *args]).strip().decode("utf-8")
+
+
 def get_config_root():
     home = os.environ.get("HOME")
     if not home:
@@ -89,6 +93,12 @@ def save_config(config):
         json.dump(config, f, cls=JSONEncoder, indent=2)
 
 
+def import_profile(config, name):
+    if name is True:
+        name = "default"
+    add_profile(config, name, git("config", "user.name"), git("config", "user.email"))
+
+
 def add_profile(config, profile_name, name, email):
     if profile_name in config.profiles:
         raise RuntimeError("Profile '{0}' already exists.".format(profile_name))
@@ -105,8 +115,8 @@ def switch_profile(config, profile_name):
     if profile_name not in config.profiles:
         raise RuntimeError("Profile '{0}' does not exist.".format(profile_name))
     profile = config.profiles[profile_name]
-    subprocess.check_call(["git", "config", "user.name", profile.name])
-    subprocess.check_call(["git", "config", "user.email", profile.email])
+    git("config", "user.name", profile.name)
+    git("config", "user.email", profile.email)
     print("Switched to profile {0}: {1} <{2}>".format(
         profile_name, profile.name, profile.email,
     ))
@@ -132,6 +142,7 @@ def print_usage():
         "usage: git profile [--switch] [KEY]\n"
         "   or: git profile --add KEY --name 'Your Name' --email 'you@example.com'\n"
         "   or: git profile --rm KEY\n"
+        "   or: git profile --import [KEY]"
     )
     print(usage)
 
@@ -160,7 +171,9 @@ def main(args):
     create_config_dir()
     config = load_config()
     args = parse_args(args)
-    if "add" in args:
+    if "import" in args:
+        import_profile(config, args.pop("import"))
+    elif "add" in args:
         add_profile(config, args.pop("add"), **args)
     elif "rm" in args:
         rm_profile(config, args.pop("rm"))
