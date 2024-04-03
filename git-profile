@@ -16,6 +16,15 @@ class Profile(object):
         self.name = name
         self.email = email
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        return self.name == other.name and \
+            self.email == other.email
+
+    def __hash__(self):
+        return hash((self.name, self.email))
+
     def __str__(self):
         return "<Profile name={0} email={1}>".format(
             self.name,
@@ -126,15 +135,17 @@ def list_profiles(config):
     if not config.profiles:
         print("No profiles!")
         return
-    current_name = subprocess.check_output(["git", "config", "user.name"]).strip().encode("utf-8")
-    current_email = subprocess.check_output(["git", "config", "user.email"]).strip().encode("utf-8")
+    current_profile = Profile(
+        git("config", "user.name"),
+        git("config", "user.email"),
+    )
     for key, profile in config.profiles.items():
-        prefix = " "
-        if profile.name == current_name and profile.email == current_email:
-            prefix = "*"
+        prefix = "*" if profile == current_profile else " "
         print("{0} {1} ({2} <{3}>)".format(
             prefix, key, profile.name, profile.email,
         ))
+    if current_profile not in config.profiles.values():
+        print(f"Warning: no profile exists for current git config!", file=sys.stderr)
 
 
 def print_usage():
