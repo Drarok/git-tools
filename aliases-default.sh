@@ -9,7 +9,9 @@ function git_root {
   cd "$GIT_ROOT"
 }
 
+alias gb='git branch'
 alias gfp="git fetch --prune"
+alias gmom="git merge origin/master"
 alias gpfl="git push --force-with-lease"
 alias gpp="git pull --prune"
 alias gr="git_root"
