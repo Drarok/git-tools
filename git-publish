@@ -4,14 +4,10 @@
 # and set up tracking. It's just a lazy man's `git push -u origin $branch`.
 
 # What's the current branch?
-BRANCH_NAME="$(git symbolic-ref --short HEAD)";
+BRANCH_NAME="$(git branch --show-current)";
 
 # Where are we pushing to?
-REMOTE_NAME="$1"
-if [ -z "$REMOTE_NAME" ]
-then
-    REMOTE_NAME="origin";
-fi
+REMOTE_NAME="${1:-origin}"
 
 echo "Publishing $BRANCH_NAME to ${REMOTE_NAME}.";
 git push -u "$REMOTE_NAME" "$BRANCH_NAME";

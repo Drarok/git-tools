@@ -2,16 +2,25 @@
 
 ## Introduction
 
-This is a collection of little scripts that I use regularly whilst working with Git.
+This is a collection of scripts and aliases that I use regularly whilst working with [Git](https://git-scm.com/).
 
 ## Installation
 
-**TL;DR:**
+1. Clone this repo somewhere e.g. `~/git-tools`
+2. Source the `activate.sh` file in your shell init script e.g. `.zshrc` or `.bashrc`
+
+For example, on my machines I run something like this:
+
 ```bash
-git clone https://github.com/Drarok/git-tools.git
-cd git-tools
-./install.sh
+git clone https://github.com/Drarok/git-tools.git ~/git-tools
+echo 'source "~/git-tools/activate.sh"' >> ~/.zshrc
 ```
+
+## Aliases
+
+By default, git-tools will set up some short aliases which you can see in `aliases-default.sh`. You can replace
+these with your own by creating a file named `aliases.sh` in the `git-tools` directory. Note that `aliases.sh` will
+take precedence over `aliases-default.sh` so be sure to copy over any aliases you want to keep.
 
 ## The Tools
 

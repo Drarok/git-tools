@@ -16,6 +16,15 @@ class Profile(object):
         self.name = name
         self.email = email
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        return self.name == other.name and \
+            self.email == other.email
+
+    def __hash__(self):
+        return hash((self.name, self.email))
+
     def __str__(self):
         return "<Profile name={0} email={1}>".format(
             self.name,
@@ -46,6 +55,10 @@ class JSONEncoder(json.JSONEncoder):
                 "email": o.email,
             }
         return super(JSONEncoder, self).default(o)
+
+
+def git(*args):
+    return subprocess.check_output(["git", *args]).strip().decode("utf-8")
 
 
 def get_config_root():
@@ -89,6 +102,12 @@ def save_config(config):
         json.dump(config, f, cls=JSONEncoder, indent=2)
 
 
+def import_profile(config, name):
+    if name is True:
+        name = "default"
+    add_profile(config, name, git("config", "user.name"), git("config", "user.email"))
+
+
 def add_profile(config, profile_name, name, email):
     if profile_name in config.profiles:
         raise RuntimeError("Profile '{0}' already exists.".format(profile_name))
@@ -105,8 +124,8 @@ def switch_profile(config, profile_name):
     if profile_name not in config.profiles:
         raise RuntimeError("Profile '{0}' does not exist.".format(profile_name))
     profile = config.profiles[profile_name]
-    subprocess.check_call(["git", "config", "user.name", profile.name])
-    subprocess.check_call(["git", "config", "user.email", profile.email])
+    git("config", "user.name", profile.name)
+    git("config", "user.email", profile.email)
     print("Switched to profile {0}: {1} <{2}>".format(
         profile_name, profile.name, profile.email,
     ))
@@ -116,15 +135,17 @@ def list_profiles(config):
     if not config.profiles:
         print("No profiles!")
         return
-    current_name = subprocess.check_output(["git", "config", "user.name"]).strip().encode("utf-8")
-    current_email = subprocess.check_output(["git", "config", "user.email"]).strip().encode("utf-8")
+    current_profile = Profile(
+        git("config", "user.name"),
+        git("config", "user.email"),
+    )
     for key, profile in config.profiles.items():
-        prefix = " "
-        if profile.name == current_name and profile.email == current_email:
-            prefix = "*"
+        prefix = "*" if profile == current_profile else " "
         print("{0} {1} ({2} <{3}>)".format(
             prefix, key, profile.name, profile.email,
         ))
+    if current_profile not in config.profiles.values():
+        print(f"Warning: no profile exists for current git config!", file=sys.stderr)
 
 
 def print_usage():
@@ -132,6 +153,7 @@ def print_usage():
         "usage: git profile [--switch] [KEY]\n"
         "   or: git profile --add KEY --name 'Your Name' --email 'you@example.com'\n"
         "   or: git profile --rm KEY\n"
+        "   or: git profile --import [KEY]"
     )
     print(usage)
 
@@ -146,7 +168,7 @@ def parse_args(args):
         if key is None:
             match = regex.match(arg)
             if not match:
-                raise ValueError("Invalid option: {0}".format(key))
+                raise ValueError("Invalid value {0} for option {1}".format(arg, key))
             key = match.group(1)
             continue
         result[key] = arg
@@ -160,7 +182,9 @@ def main(args):
     create_config_dir()
     config = load_config()
     args = parse_args(args)
-    if "add" in args:
+    if "import" in args:
+        import_profile(config, args.pop("import"))
+    elif "add" in args:
         add_profile(config, args.pop("add"), **args)
     elif "rm" in args:
         rm_profile(config, args.pop("rm"))
