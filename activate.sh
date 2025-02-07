@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-ROOT_DIR=$(dirname $_)
+ROOT_DIR=$(dirname $BASH_SOURCE)
 
 if [[ "$PATH" == *"$ROOT_DIR"* ]]; then
   echo "[WARN] Path already includes git-tools, skipped"
