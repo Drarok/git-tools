@@ -1,5 +1,8 @@
-#!/usr/bin/env bash
-ROOT_DIR=$(dirname $BASH_SOURCE)
+if [ -n "$BASH_VERSION" ]; then
+  ROOT_DIR=$(dirname $BASH_SOURCE)
+elif [ -n "$ZSH_VERSION" ]; then
+  ROOT_DIR=$(dirname "${(%):-%x}")
+fi
 
 if [[ "$PATH" == *"$ROOT_DIR"* ]]; then
   echo "[WARN] Path already includes git-tools, skipped"
