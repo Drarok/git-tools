@@ -1,0 +1,7 @@
+{
+  "name": "git-tools",
+  "version": "0.1.0",
+  "dependencies": {
+    "shell": "^0.12.0"
+  }
+}
