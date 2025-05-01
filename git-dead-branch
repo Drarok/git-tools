@@ -1,0 +1,112 @@
+#!/usr/bin/env node
+const { shell } = require('shell');
+
+const Git = require('./lib/git');
+
+const app = shell({
+  name: 'git-dead-branch',
+  description: 'List/delete branches that are contained in any "safe" branch.',
+  main: {
+    name: 'branches',
+    description: 'Names of the branches to consider "safe". Defaults to develop, master, and main.',
+  },
+  options: {
+    all: {
+      type: 'boolean',
+      shortcut: 'a',
+      description: 'Include remote branches.',
+    },
+    cleanup: {
+      type: 'boolean',
+      shortcut: 'c',
+      description: 'Automatically delete redundant branches.',
+    },
+    force: {
+      type: 'boolean',
+      shortcut: 'f',
+      description: 'Forces deletion of redundant branches.',
+    },
+  },
+});
+
+function usage(app) {
+  const helpText = app.help()
+    .replace('{branches}', '[branches...]')
+    .replace('[git-dead-branch options]', '[options]');
+  console.log(typeof helpText)
+  process.stdout.write(helpText);
+  process.exit(0);
+}
+
+class BranchChecker {
+  #regexp;
+
+  constructor(safeBranches) {
+    if (!safeBranches || !safeBranches.length) {
+      safeBranches = ['develop', 'master', 'main'];
+    }
+
+    const safeBranchesPattern = safeBranches.join('|');
+    this.#regexp = new RegExp(`^(remotes/[^/]+/)?(${safeBranchesPattern})$`);
+  }
+
+  isSafe(branch) {
+    return branch.match(this.#regexp);
+  }
+}
+
+async function main() {
+  const args = app.parse();
+
+  if (args.help) {
+    usage(app);
+    process.exit(1);
+  }
+
+  const branchChecker = new BranchChecker(args.branches);
+
+  const branches = await Git.localBranches();
+  if (args.all) {
+    const remoteBranches = await Git.remoteBranches();
+    branches.push(...remoteBranches);
+  }
+
+  const safeBranchNames = await Promise.all(branches.map(async (branch) => {
+    if (branchChecker.isSafe(branch)) {
+      return null;
+    }
+
+    const containingBranches = await Git.allBranchesContaining(branch);
+    const isDead = containingBranches.some(containingBranch => {
+      return branchChecker.isSafe(containingBranch);
+    })
+    return isDead ? branch : null;
+  }));
+
+  const deadBranches = safeBranchNames.filter(branch => branch !== null);
+
+  if (!deadBranches.length) {
+    console.log('There are no dead branches.');
+    return;
+  }
+
+  const cleanup = args.cleanup && !args.all;
+  if (args.cleanup && args.all) {
+    console.log('Cleaning up remote branches is not currently supported.');
+  }
+
+  for (const branch of deadBranches) {
+    if (cleanup) {
+      const output = await Git.deleteBranch(branch, args.force);
+      process.stdout.write(output);
+    } else {
+      console.log(branch);
+    }
+  }
+}
+
+main()
+  .catch(e => {
+    console.error(e.backtrack || e.message || e);
+    process.exit(1);
+  })
