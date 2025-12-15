@@ -26,7 +26,7 @@ take precedence over `aliases-default.sh` so be sure to copy over any aliases yo
 
 ### git-dead-branch
 
-Lists (and optionally removes) branches that have been merged to "safe" branches – develop and master by default.
+Lists (and optionally removes) branches that have been merged to "safe" branches – develop, main, and master by default.
 
 ```bash
 develop $ git dead-branch
@@ -71,10 +71,10 @@ develop $
 ```
 
 ```bash
-hotfix/emergency-kittens $ git merged master
-a5b8751..36c5316  master -> origin/master
+hotfix/emergency-kittens $ git merged main
+a5b8751..36c5316  main -> origin/main
 Deleted branch hotfix/emergency-kittens (was 6adb76d).
-master $
+main $
 ```
 
 ### git-publish
