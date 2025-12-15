@@ -5,7 +5,7 @@
 # Thanks http://stackoverflow.com/a/1593487/328817
 branch_name="$(git symbolic-ref -q --short HEAD 2>/dev/null)" || branch_name="(unnamed branch)"; # detached HEAD
 
-if [ "$branch_name" = "develop" ] || [ "$branch_name" = "master" ]
+if [ "$branch_name" = "develop" ] || [ "$branch_name" = "main" ] || [ "$branch_name" = "master" ]
 then
     echo "Only for feature branches!";
     exit 1;
@@ -35,5 +35,5 @@ remote=$(git config branch.${target_branch}.remote);
 git remote prune $remote;
 
 echo
-echo 'Remaining branches:'
+echo 'Remaining local branches:'
 git branch
