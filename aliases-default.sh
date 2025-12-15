@@ -1,5 +1,5 @@
 # Quick cd to root of git repo.
-function git_root {
+function __git_tools_git_root {
   GIT_ROOT=$(git rev-parse --show-toplevel)
 
   if [ "$GIT_ROOT" = "" ]; then
@@ -9,14 +9,18 @@ function git_root {
   cd "$GIT_ROOT"
 }
 
+function __git_tools_git_rebase {
+  git rebase -i "origin/${1:-master}"
+}
+
 alias gb='git branch'
 alias gfp="git fetch --prune"
 alias gmom="git merge origin/master"
 alias gpfl="git push --force-with-lease"
 alias gpp="git pull --prune"
-alias gr="git_root"
+alias gr="__git_tools_git_root"
 alias grc="git rebase --continue"
-alias grm="git rebase -i origin/master"
+alias grm="__git_tools_git_rebase"
 alias gs="git switch"
 alias gsp="git stash push"
 alias gst="git status -uno"
