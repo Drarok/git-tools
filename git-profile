@@ -159,14 +159,17 @@ def print_usage():
 
 
 def parse_args(args):
-    regex = re.compile(r"^--(\w+)$")
-    if len(args) == 1 and not regex.match(args[0]):
-        return {"switch": args[0]}
+    option_regex = re.compile(r"^--(\w+)$")
+    if len(args) == 1:
+        if args[0] == 'help':
+            return {'help': True}
+        if not option_regex.match(args[0]):
+            return {"switch": args[0]}
     result = {}
     key = None
     for arg in args:
         if key is None:
-            match = regex.match(arg)
+            match = option_regex.match(arg)
             if not match:
                 raise ValueError("Invalid value {0} for option {1}".format(arg, key))
             key = match.group(1)
