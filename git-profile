@@ -133,7 +133,7 @@ def switch_profile(config, profile_name):
 
 def list_profiles(config):
     if not config.profiles:
-        print("No profiles!")
+        print_usage()
         return
     current_profile = Profile(
         git("config", "user.name"),
