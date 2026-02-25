@@ -10,6 +10,10 @@ else
   export PATH="$PATH:$ROOT_DIR"
 fi
 
+function _git_tools_git_root {
+  git rev-parse --show-toplevel
+}
+
 function _git_tools_alias_path {
   CANDIDATES=("aliases.sh" "aliases-default.sh")
   for CANDIDATE_NAME in ${CANDIDATES[@]}; do
