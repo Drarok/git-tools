@@ -10,6 +10,20 @@ else
   export PATH="$PATH:$ROOT_DIR"
 fi
 
+function _git_tools_git_root {
+  git rev-parse --show-toplevel
+}
+
+function _git_tools_default_branch {
+  GIT_ROOT=$(_git_tools_git_root)
+
+  if [ "$GIT_ROOT" = "" ]; then
+    return 128
+  fi
+
+  node "$ROOT_DIR/default-branch.mjs" "$GIT_ROOT" "$@"
+}
+
 function _git_tools_alias_path {
   CANDIDATES=("aliases.sh" "aliases-default.sh")
   for CANDIDATE_NAME in ${CANDIDATES[@]}; do
